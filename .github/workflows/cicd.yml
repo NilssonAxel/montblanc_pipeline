@@ -70,6 +70,7 @@ jobs:
     env:
       DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
       DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+      DATABRICKS_SERVERLESS_COMPUTE_ID: auto
       CATALOG_NAME: montblanc_test
     steps:
       - uses: actions/checkout@v4
@@ -102,6 +103,7 @@ jobs:
     env:
       DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
       DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+      DATABRICKS_SERVERLESS_COMPUTE_ID: auto
       CATALOG_NAME: montblanc_prod
     steps:
       - uses: actions/checkout@v4
