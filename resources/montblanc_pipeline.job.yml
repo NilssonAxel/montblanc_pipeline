@@ -1,0 +1,76 @@
+# Montblanc pipeline job
+resources:
+  jobs:
+    montblanc_pipeline:
+      name: montblanc_pipeline_${bundle.target}
+      timeout_seconds: 7200
+      trigger:
+        periodic:
+          interval: 1
+          unit: DAYS
+
+      email_notifications:
+        on_failure:
+          - ${workspace.current_user.userName}
+
+      tasks:
+        - task_key: bronze
+          python_wheel_task:
+            package_name: montblanc_pipeline
+            entry_point: run_bronze
+            parameters:
+              - "--catalog"
+              - "${var.catalog}"
+          environment_key: default
+
+        - task_key: silver
+          depends_on:
+            - task_key: bronze
+          python_wheel_task:
+            package_name: montblanc_pipeline
+            entry_point: run_silver
+            parameters:
+              - "--catalog"
+              - "${var.catalog}"
+          environment_key: default
+
+        - task_key: dbt_run
+          depends_on:
+            - task_key: silver
+          dbt_task:
+            project_directory: ./montblanc_dbt
+            commands:
+              - "dbt deps"
+              - "dbt run"
+            warehouse_id: ${var.warehouse_id}
+            catalog: ${var.catalog}
+            schema: gold
+
+        - task_key: dbt_test
+          depends_on:
+            - task_key: dbt_run
+          dbt_task:
+            project_directory: ./montblanc_dbt
+            commands:
+              - "dbt test"
+            warehouse_id: ${var.warehouse_id}
+            catalog: ${var.catalog}
+            schema: gold
+
+        - task_key: dbt_source_freshness
+          depends_on:
+            - task_key: dbt_test
+          dbt_task:
+            project_directory: ./montblanc_dbt
+            commands:
+              - "dbt source freshness"
+            warehouse_id: ${var.warehouse_id}
+            catalog: ${var.catalog}
+            schema: gold
+
+      environments:
+        - environment_key: default
+          spec:
+            environment_version: "4"
+            dependencies:
+              - ../dist/*.whl

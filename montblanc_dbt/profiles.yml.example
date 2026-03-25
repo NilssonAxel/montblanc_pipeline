@@ -1,0 +1,27 @@
+montblanc_dbt:
+  outputs:
+    dev:
+      type: databricks
+      host: [host].cloud.databricks.com
+      http_path: /sql/1.0/warehouses/[warehouse_id]
+      token: [databricks_token]
+      catalog: montblanc_dev
+      schema: gold
+      threads: 4
+    test:
+      type: databricks
+      host: [host].cloud.databricks.com
+      http_path: /sql/1.0/warehouses/[warehouse_id]
+      token: [databricks_token]
+      catalog: montblanc_test
+      schema: gold
+      threads: 4
+    prod:
+      type: databricks
+      host: [host].cloud.databricks.com
+      http_path: /sql/1.0/warehouses/[warehouse_id]
+      token: [databricks_token]
+      catalog: montblanc_prod
+      schema: gold
+      threads: 4
+  target: dev

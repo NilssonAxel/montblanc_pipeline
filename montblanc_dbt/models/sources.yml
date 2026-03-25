@@ -1,0 +1,132 @@
+version: 2
+
+sources:
+  - name: silver
+    catalog: "{{ env_var('DBT_CATALOG', 'montblanc_dev') }}"
+    schema: silver
+    description: >
+      Cleaned and flattened weather records produced by the silver Python pipeline.
+      One row per waypoint per day, deduplicated to keep the most recent observation.
+    tables:
+      - name: weather
+        description: Daily weather observations for each Mont Blanc waypoint.
+        loaded_at_field: date
+        freshness:
+          warn_after: {count: 14, period: day}
+          error_after: {count: 16, period: day}
+        columns:
+          - name: waypoint_name
+            description: Name of the waypoint (chamonix, tete_rousse, gouter, vallot, summit).
+            tests:
+              - not_null
+              - accepted_values:
+                  values: [chamonix, tete_rousse, gouter, vallot, summit]
+
+          - name: elevation
+            description: Elevation of the waypoint in metres.
+            tests:
+              - not_null
+              - dbt_utils.accepted_range:
+                  min_value: 1000
+                  max_value: 5000
+
+          - name: date
+            description: The observation date.
+            tests:
+              - not_null
+
+          - name: temperature_max_c
+            description: Daily maximum temperature at 2m in degrees Celsius.
+            tests:
+              - not_null
+              - dbt_utils.accepted_range:
+                  min_value: -60
+                  max_value: 50
+
+          - name: temperature_min_c
+            description: Daily minimum temperature at 2m in degrees Celsius.
+            tests:
+              - not_null
+              - dbt_utils.accepted_range:
+                  min_value: -60
+                  max_value: 50
+
+          - name: windspeed_max_ms
+            description: Daily maximum wind speed at 10m in metres per second.
+            tests:
+              - not_null
+              - dbt_utils.accepted_range:
+                  min_value: 0
+                  max_value: 100
+
+          - name: windgusts_max_ms
+            description: Daily maximum wind gusts at 10m in metres per second.
+            tests:
+              - not_null
+              - dbt_utils.accepted_range:
+                  min_value: 0
+                  max_value: 150
+
+          - name: precipitation_mm
+            description: Total daily precipitation in millimetres.
+            tests:
+              - not_null
+              - dbt_utils.accepted_range:
+                  min_value: 0
+                  max_value: 500
+
+          - name: snowfall_cm
+            description: Total daily snowfall in centimetres.
+            tests:
+              - not_null
+              - dbt_utils.accepted_range:
+                  min_value: 0
+                  max_value: 300
+
+          - name: snow_depth_m
+            description: Snow depth at end of day in metres.
+            tests:
+              - not_null
+              - dbt_utils.accepted_range:
+                  min_value: 0
+                  max_value: 20
+
+          - name: pressure_hpa
+            description: Mean surface pressure in hectopascals.
+            tests:
+              - not_null
+              - dbt_utils.accepted_range:
+                  min_value: 500
+                  max_value: 1100
+
+          - name: cloudcover_pct
+            description: Mean cloud cover as a percentage.
+            tests:
+              - not_null
+              - dbt_utils.accepted_range:
+                  min_value: 0
+                  max_value: 100
+
+          - name: daylight_hours
+            description: Total daylight duration in hours.
+            tests:
+              - not_null
+              - dbt_utils.accepted_range:
+                  min_value: 0
+                  max_value: 24
+
+          - name: sunshine_hours
+            description: Total sunshine duration in hours.
+            tests:
+              - not_null
+              - dbt_utils.accepted_range:
+                  min_value: 0
+                  max_value: 24
+
+          - name: air_density_kgm3
+            description: Air density derived from pressure and temperature in kg/m3.
+            tests:
+              - not_null
+              - dbt_utils.accepted_range:
+                  min_value: 0.5
+                  max_value: 1.5

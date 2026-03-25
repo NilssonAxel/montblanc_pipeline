@@ -1,0 +1,12 @@
+category,sub_score,metric,viable_min,viable_max,ideal_min,ideal_max,category_weight,sub_category_weight,overall_weight,unit,scored,notes
+wind,summit_wind_score,summit_windgusts_max_ms,,14,,7,0.30,0.60,0.18,m/s,true,"Primary wind check - most common cause of failed summits"
+wind,gouter_wind_score,gouter_windgusts_max_ms,,18,,9,0.30,0.20,0.06,m/s,true,"Gouter ridge - channelled wind on approach"
+wind,vallot_wind_score,vallot_windgusts_max_ms,,18,,9,0.30,0.20,0.06,m/s,true,"Upper ridge exposure between Vallot and summit"
+temperature,summit_temp_score,summit_temperature_min_c,-20,2,-5,-5,0.25,0.40,0.10,C,true,"Triangular score peaking at -5C - above 0C risks thaw on summit snowfields"
+temperature,gouter_freeze_score,gouter_temperature_max_c,,2,,-5,0.25,0.60,0.15,C,true,"Grand Couloir freeze - must stay frozen on both ascent and descent"
+temperature,,gouter_temperature_min_c,,0,,,,,,C,false,"Hard check - Grand Couloir overnight freeze (not scored separately)"
+visibility,visibility_score,summit_cloudcover_pct,,60,,20,0.20,1.00,0.20,%,true,"Whiteout risk on featureless summit snowfields above Vallot"
+stability,snowfall_score,rolling_3day_snowfall_cm,,0,,0,0.25,0.60,0.15,cm,true,"Binary - zero tolerance for recent snowfall due to elevated avalanche risk"
+stability,thaw_score,avg_3day_gouter_temp_max_c,,0,,-5,0.25,0.40,0.10,C,true,"Rolling 3-day average - ensures mountain has remained frozen recently"
+stability,,total_precipitation_mm,,0,,,,,,mm,false,"Hard check - no precipitation on route (not scored separately)"
+stability,,total_snowfall_cm,,0,,,,,,cm,false,"Hard check - no fresh snowfall today (not scored separately)"

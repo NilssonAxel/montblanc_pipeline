@@ -1,0 +1,34 @@
+# Terraform
+infrastructure/terraform.tfvars
+infrastructure/.terraform/
+infrastructure/.terraform.lock.hcl
+infrastructure/terraform.tfstate
+infrastructure/terraform.tfstate.backup
+infrastructure/terraform.tfvars
+
+# Databricks
+.databricks/
+
+# vscode
+.vscode/
+
+# Python
+build/
+dist/
+__pycache__/
+*.egg-info
+
+# Virtual environments
+.venv/
+
+# Logs
+logs/
+
+# Notebooks
+*.ipynb
+
+# Scratch and exploration
+scratch/**
+!scratch/README.md
+**/explorations/**
+!**/explorations/README.md

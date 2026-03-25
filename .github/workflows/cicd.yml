@@ -1,0 +1,109 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: uv run ruff check .
+
+  unit-test:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    environment: test
+    env:
+      DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+      DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: uv run pytest tests/ -v --ignore=tests/test_integration.py --ignore=tests/test_smoke.py
+
+  # The wheel is built once here and reused for both test and prod deploys,
+  # ensuring both environments run identical artifacts.
+  build:
+    name: Build wheel
+    needs: [lint, unit-test]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: uv build --wheel
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wheel
+          path: dist/*.whl
+          retention-days: 7
+
+  deploy-test:
+    name: Deploy to Test
+    needs: [build]
+    runs-on: ubuntu-latest
+    environment: test
+    env:
+      DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+      DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - uses: databricks/setup-cli@main
+      - uses: actions/download-artifact@v4
+        with:
+          name: wheel
+          path: dist/
+      - run: databricks bundle deploy --target test
+
+  integration-test:
+    name: Integration Tests
+    needs: [deploy-test]
+    runs-on: ubuntu-latest
+    environment: test
+    env:
+      DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+      DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+      CATALOG_NAME: montblanc_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: uv run pytest tests/test_integration.py -v
+
+  deploy-prod:
+    name: Deploy to Prod
+    needs: [integration-test]
+    runs-on: ubuntu-latest
+    environment: prod
+    env:
+      DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+      DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - uses: databricks/setup-cli@main
+      - uses: actions/download-artifact@v4
+        with:
+          name: wheel
+          path: dist/
+      - run: databricks bundle deploy --target prod
+
+  smoke-test:
+    name: Smoke Tests
+    needs: [deploy-prod]
+    runs-on: ubuntu-latest
+    environment: prod
+    env:
+      DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+      DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+      CATALOG_NAME: montblanc_prod
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: uv run pytest tests/test_smoke.py -v

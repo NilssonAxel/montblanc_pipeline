@@ -1,0 +1,82 @@
+version: 2
+
+models:
+  - name: daily_conditions
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [waypoint_name, date]
+    columns:
+      - name: waypoint_name
+        tests:
+          - not_null
+      - name: date
+        tests:
+          - not_null
+      - name: elevation
+        tests:
+          - not_null
+
+  - name: monthly_conditions
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [waypoint_name, year_month]
+    columns:
+      - name: waypoint_name
+        tests:
+          - not_null
+      - name: year_month
+        tests:
+          - not_null
+      - name: year
+        tests:
+          - not_null
+
+  - name: summit_window
+    columns:
+      - name: date
+        tests:
+          - not_null
+          - unique
+      - name: is_viable
+        tests:
+          - not_null
+      - name: is_ideal
+        tests:
+          - not_null
+      - name: overall_score
+        tests:
+          - not_null
+
+  - name: elevation_gradient
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [waypoint_name, date]
+    columns:
+      - name: waypoint_name
+        tests:
+          - not_null
+      - name: date
+        tests:
+          - not_null
+      - name: elevation
+        tests:
+          - not_null
+
+  - name: seasonal_summary
+    columns:
+      - name: month
+        tests:
+          - not_null
+          - unique
+      - name: month_name
+        tests:
+          - not_null
+      - name: viable_days_pct
+        tests:
+          - not_null
+      - name: ideal_days_pct
+        tests:
+          - not_null

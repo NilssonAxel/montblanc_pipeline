@@ -1,0 +1,33 @@
+[project]
+name = "montblanc_pipeline"
+version = "0.0.1"
+authors = [{ name = "axelnilsson_gk@hotmail.com" }]
+requires-python = ">=3.10,<3.13"
+dependencies = [
+    "requests",
+    "python-dateutil",
+]
+
+[dependency-groups]
+dev = [
+    "pytest",
+    "ruff",
+    "databricks-sdk",
+    "databricks-connect>=15.4,<15.5",
+    "dbt-databricks",
+    "ipykernel",
+]
+
+[project.scripts]
+run_bronze = "montblanc_pipeline.main:run_bronze"
+run_silver = "montblanc_pipeline.main:run_silver"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.pytest.ini_options]
+addopts = "--ignore=tests/test_integration.py --ignore=tests/test_smoke.py"
+
+[tool.ruff]
+line-length = 120
