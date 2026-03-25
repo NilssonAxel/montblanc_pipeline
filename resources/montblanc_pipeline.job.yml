@@ -38,7 +38,7 @@ resources:
           depends_on:
             - task_key: silver
           dbt_task:
-            project_directory: ./montblanc_dbt
+            project_directory: ../montblanc_dbt
             commands:
               - "dbt deps"
               - "dbt run"
@@ -50,7 +50,7 @@ resources:
           depends_on:
             - task_key: dbt_run
           dbt_task:
-            project_directory: ./montblanc_dbt
+            project_directory: ../montblanc_dbt
             commands:
               - "dbt test"
             warehouse_id: ${var.warehouse_id}
@@ -61,7 +61,7 @@ resources:
           depends_on:
             - task_key: dbt_test
           dbt_task:
-            project_directory: ./montblanc_dbt
+            project_directory: ../montblanc_dbt
             commands:
               - "dbt source freshness"
             warehouse_id: ${var.warehouse_id}
