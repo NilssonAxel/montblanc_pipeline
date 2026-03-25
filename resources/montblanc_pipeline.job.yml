@@ -37,6 +37,7 @@ resources:
         - task_key: dbt_run
           depends_on:
             - task_key: silver
+          environment_key: default
           dbt_task:
             project_directory: ../montblanc_dbt
             commands:
@@ -49,6 +50,7 @@ resources:
         - task_key: dbt_test
           depends_on:
             - task_key: dbt_run
+          environment_key: default
           dbt_task:
             project_directory: ../montblanc_dbt
             commands:
@@ -60,6 +62,7 @@ resources:
         - task_key: dbt_source_freshness
           depends_on:
             - task_key: dbt_test
+          environment_key: default
           dbt_task:
             project_directory: ../montblanc_dbt
             commands:
