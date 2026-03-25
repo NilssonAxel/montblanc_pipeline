@@ -18,7 +18,6 @@ jobs:
   unit-test:
     name: Unit Tests
     runs-on: ubuntu-latest
-    environment: test
     env:
       DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
       DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
