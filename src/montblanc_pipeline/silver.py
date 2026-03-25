@@ -1,8 +1,7 @@
 import logging
-from pyspark.sql import functions as F
+from pyspark.sql import functions as F, DataFrame
 from pyspark.sql import Window as W
 from pyspark.sql.types import StructType, StructField, ArrayType, StringType, DoubleType
-from datetime import date
 from databricks.sdk.runtime import spark
 from delta.tables import DeltaTable
 from montblanc_pipeline.config import BRONZE_WEATHER_RAW, SILVER_WEATHER
@@ -28,12 +27,12 @@ RESPONSE_SCHEMA = StructType([
 ])
 
 
-def read_bronze(spark) -> "DataFrame":
+def read_bronze(spark) -> DataFrame:
     latest = get_watermark("silver")
     return spark.table(BRONZE_WEATHER_RAW).filter(F.col("period_start") > latest)
 
 
-def transform_silver(df: "DataFrame") -> "DataFrame":
+def transform_silver(df: DataFrame) -> DataFrame:
     # Parse JSON string into struct
     df = df.withColumn("response", F.from_json(F.col("response_json"), RESPONSE_SCHEMA))
 
@@ -89,7 +88,7 @@ def transform_silver(df: "DataFrame") -> "DataFrame":
     return df
 
 
-def write_silver(df: "DataFrame") -> None:
+def write_silver(df: DataFrame) -> None:
     if spark.catalog.tableExists(SILVER_WEATHER):
         delta_table = DeltaTable.forName(spark, SILVER_WEATHER)
         delta_table.alias("t").merge(

@@ -18,10 +18,10 @@ jobs:
   unit-test:
     name: Unit Tests
     runs-on: ubuntu-latest
-    environment: test
     env:
       DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
       DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+      DATABRICKS_SERVERLESS_COMPUTE_ID: auto
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5

@@ -2,7 +2,6 @@
 Smoke tests — run after deploying to prod.
 Lightweight checks that prod tables exist and data is fresh.
 """
-import pytest
 from datetime import date, timedelta
 from pyspark.sql import SparkSession
 from pyspark.sql import functions as F

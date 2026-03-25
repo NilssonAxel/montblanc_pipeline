@@ -1,8 +1,8 @@
 import logging
-from pyspark.sql import functions as F
+from pyspark.sql import functions as F, DataFrame
 from pyspark.sql.types import StructType, StructField, DateType, StringType
 from datetime import date
-from montblanc_pipeline.config import CATALOG, META_WATERMARK
+from montblanc_pipeline.config import META_WATERMARK
 from databricks.sdk.runtime import spark
 
 logger = logging.getLogger(__name__)
@@ -44,10 +44,10 @@ def update_watermark(layer: str, last_completed_date: date) -> None:
     logger.info("Watermark updated for %s: %s", layer, last_completed_date)
 
 
-def get_max_date(df: "DataFrame") -> date | None:
+def get_max_date(df: DataFrame) -> date | None:
     return df.agg(F.max("date")).collect()[0][0]
 
 
-def write_delta_table(df: "DataFrame", table_name: str, mode: str = "append") -> None:
+def write_delta_table(df: DataFrame, table_name: str, mode: str = "append") -> None:
     df.write.format("delta").mode(mode).saveAsTable(table_name)
     logger.info("Written to %s", table_name)

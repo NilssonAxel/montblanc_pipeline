@@ -2,7 +2,7 @@ import logging
 import requests
 import json
 from databricks.sdk.runtime import spark
-from pyspark.sql import functions as F
+from pyspark.sql import DataFrame
 from pyspark.sql.types import StringType, IntegerType, StructType, StructField, DateType, TimestampType
 from datetime import date, datetime, timedelta
 from dateutil.relativedelta import relativedelta
@@ -43,7 +43,7 @@ def fetch_waypoint(waypoint_name: str, waypoint_config: dict, start: date, end: 
             logger.warning("Attempt %d failed for %s %s, retrying...", attempt + 1, waypoint_name, start)
 
 
-def transform_bronze(raw_data: list[dict]) -> "DataFrame":
+def transform_bronze(raw_data: list[dict]) -> DataFrame:
     rows = []
     for entry in raw_data:
         rows.append((

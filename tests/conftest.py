@@ -1,6 +1,7 @@
 """This file configures pytest, initializes Databricks Connect, and provides fixtures for Spark and loading test data."""
 
-import sys, pathlib
+import sys
+import pathlib
 from contextlib import contextmanager
 
 
