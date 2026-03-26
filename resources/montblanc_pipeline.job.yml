@@ -34,7 +34,7 @@ resources:
               - "${var.catalog}"
           environment_key: default
 
-        - task_key: dbt_run
+        - task_key: dbt
           depends_on:
             - task_key: silver
           environment_key: default
@@ -43,29 +43,7 @@ resources:
             commands:
               - "dbt deps"
               - "dbt run"
-            warehouse_id: ${var.warehouse_id}
-            catalog: ${var.catalog}
-            schema: gold
-
-        - task_key: dbt_test
-          depends_on:
-            - task_key: dbt_run
-          environment_key: default
-          dbt_task:
-            project_directory: ../montblanc_dbt
-            commands:
               - "dbt test"
-            warehouse_id: ${var.warehouse_id}
-            catalog: ${var.catalog}
-            schema: gold
-
-        - task_key: dbt_source_freshness
-          depends_on:
-            - task_key: dbt_test
-          environment_key: default
-          dbt_task:
-            project_directory: ../montblanc_dbt
-            commands:
               - "dbt source freshness"
             warehouse_id: ${var.warehouse_id}
             catalog: ${var.catalog}
