@@ -4,7 +4,7 @@ from pyspark.sql import Window as W
 from pyspark.sql.types import StructType, StructField, ArrayType, StringType, DoubleType
 from databricks.sdk.runtime import spark
 from delta.tables import DeltaTable
-from montblanc_pipeline.config import BRONZE_WEATHER_RAW, SILVER_WEATHER
+import montblanc_pipeline.config as config
 from montblanc_pipeline.utils import get_watermark, update_watermark, get_max_date
 
 logger = logging.getLogger(__name__)
@@ -29,7 +29,7 @@ RESPONSE_SCHEMA = StructType([
 
 def read_bronze(spark) -> DataFrame:
     latest = get_watermark("silver")
-    return spark.table(BRONZE_WEATHER_RAW).filter(F.col("period_start") > latest)
+    return spark.table(f"{config.CATALOG}.bronze.weather_raw").filter(F.col("period_start") > latest)
 
 
 def transform_silver(df: DataFrame) -> DataFrame:
@@ -89,8 +89,9 @@ def transform_silver(df: DataFrame) -> DataFrame:
 
 
 def write_silver(df: DataFrame) -> None:
-    if spark.catalog.tableExists(SILVER_WEATHER):
-        delta_table = DeltaTable.forName(spark, SILVER_WEATHER)
+    silver_weather = f"{config.CATALOG}.silver.weather"
+    if spark.catalog.tableExists(silver_weather):
+        delta_table = DeltaTable.forName(spark, silver_weather)
         delta_table.alias("t").merge(
             df.alias("s"),
             "t.waypoint_name = s.waypoint_name AND t.date = s.date"
@@ -98,9 +99,9 @@ def write_silver(df: DataFrame) -> None:
          .whenNotMatchedInsertAll() \
          .execute()
     else:
-        df.write.format("delta").saveAsTable(SILVER_WEATHER)
+        df.write.format("delta").saveAsTable(silver_weather)
 
-    logger.info("Written to %s", SILVER_WEATHER)
+    logger.info("Written to %s", silver_weather)
 
 
 def load_silver() -> None:

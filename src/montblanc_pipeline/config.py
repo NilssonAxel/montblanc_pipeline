@@ -32,10 +32,3 @@ END_DATE_ACTIVE = True
 LAG_DAYS = 7
 MAX_STALENESS_DAYS = 14
 
-BRONZE_WEATHER_RAW = f"{CATALOG}.bronze.weather_raw"
-SILVER_WEATHER = f"{CATALOG}.silver.weather"
-GOLD_MONTHLY_CONDITIONS = f"{CATALOG}.gold.monthly_conditions"
-GOLD_SUMMIT_WINDOW = f"{CATALOG}.gold.summit_window"
-GOLD_ELEVATION_GRADIENT = f"{CATALOG}.gold.elevation_gradient"
-GOLD_SEASONAL_SUMMARY = f"{CATALOG}.gold.seasonal_summary"
-META_WATERMARK = f"{CATALOG}.meta.watermark"
