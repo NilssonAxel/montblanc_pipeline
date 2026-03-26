@@ -6,7 +6,8 @@ from pyspark.sql import DataFrame
 from pyspark.sql.types import StringType, IntegerType, StructType, StructField, DateType, TimestampType
 from datetime import date, datetime, timedelta
 from dateutil.relativedelta import relativedelta
-from montblanc_pipeline.config import WAYPOINTS, API_BASE_URL, VARIABLES, START_DATE, END_DATE, END_DATE_ACTIVE, BRONZE_WEATHER_RAW, LAG_DAYS
+import montblanc_pipeline.config as config
+from montblanc_pipeline.config import WAYPOINTS, API_BASE_URL, VARIABLES, START_DATE, END_DATE, END_DATE_ACTIVE, LAG_DAYS
 from montblanc_pipeline.utils import get_watermark, update_watermark, write_delta_table
 
 logger = logging.getLogger(__name__)
@@ -89,7 +90,7 @@ def load_bronze() -> None:
             })
 
         df = transform_bronze(raw_data)
-        write_delta_table(df, BRONZE_WEATHER_RAW)
+        write_delta_table(df, f"{config.CATALOG}.bronze.weather_raw")
         update_watermark("bronze", period_end)
         logger.info("Completed %s to %s.", period_start, period_end)
 

@@ -1,7 +1,7 @@
 import re
 import logging
 import argparse
-from databricks.sdk.runtime import spark
+import montblanc_pipeline.config as config
 from montblanc_pipeline.bronze import load_bronze
 from montblanc_pipeline.silver import load_silver
 
@@ -17,7 +17,7 @@ def _parse_catalog() -> str:
     args = parser.parse_args()
     if not _CATALOG_RE.match(args.catalog):
         raise ValueError(f"Invalid catalog name: {args.catalog!r}")
-    spark.sql(f"USE CATALOG `{args.catalog}`")
+    config.CATALOG = args.catalog
     return args.catalog
 
 

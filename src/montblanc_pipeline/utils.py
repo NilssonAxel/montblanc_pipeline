@@ -2,7 +2,7 @@ import logging
 from pyspark.sql import functions as F, DataFrame
 from pyspark.sql.types import StructType, StructField, DateType, StringType
 from datetime import date
-from montblanc_pipeline.config import META_WATERMARK
+import montblanc_pipeline.config as config
 from databricks.sdk.runtime import spark
 
 logger = logging.getLogger(__name__)
@@ -10,7 +10,8 @@ logger = logging.getLogger(__name__)
 
 def get_watermark(layer: str) -> date:
     try:
-        df = spark.table(META_WATERMARK)
+        meta_watermark = f"{config.CATALOG}.meta.watermark"
+        df = spark.table(meta_watermark)
         result = df.filter(F.col("layer") == layer) \
                    .agg(F.max("last_completed_date")).collect()[0][0]
         return result if result is not None else date(1900, 1, 1)
@@ -23,6 +24,7 @@ def update_watermark(layer: str, last_completed_date: date) -> None:
         logger.warning("No watermark to update for %s — skipping.", layer)
         return
 
+    meta_watermark = f"{config.CATALOG}.meta.watermark"
     schema = StructType([
         StructField("layer", StringType(), False),
         StructField("last_completed_date", DateType(), False)
@@ -31,15 +33,15 @@ def update_watermark(layer: str, last_completed_date: date) -> None:
     row = [(layer, last_completed_date)]
     df = spark.createDataFrame(row, schema)
 
-    if spark.catalog.tableExists(META_WATERMARK):
+    if spark.catalog.tableExists(meta_watermark):
         df.write.format("delta") \
           .mode("overwrite") \
           .option("replaceWhere", f"layer = '{layer}'") \
-          .saveAsTable(META_WATERMARK)
+          .saveAsTable(meta_watermark)
     else:
         df.write.format("delta") \
           .mode("overwrite") \
-          .saveAsTable(META_WATERMARK)
+          .saveAsTable(meta_watermark)
 
     logger.info("Watermark updated for %s: %s", layer, last_completed_date)
 
