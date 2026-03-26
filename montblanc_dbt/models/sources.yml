@@ -10,10 +10,6 @@ sources:
     tables:
       - name: weather
         description: Daily weather observations for each Mont Blanc waypoint.
-        loaded_at_field: date
-        freshness:
-          warn_after: {count: 14, period: day}
-          error_after: {count: 16, period: day}
         columns:
           - name: waypoint_name
             description: Name of the waypoint (chamonix, tete_rousse, gouter, vallot, summit).
