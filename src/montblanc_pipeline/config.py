@@ -26,9 +26,9 @@ VARIABLES = [
     "sunshine_duration"
 ]
 
-START_DATE = "2020-01-01"
-END_DATE = "2020-03-30"
-END_DATE_ACTIVE = True
+START_DATE = os.getenv("START_DATE", "2020-01-01")
+END_DATE = os.getenv("END_DATE", "2020-02-28")
+END_DATE_ACTIVE = os.getenv("END_DATE_ACTIVE", "true").lower() == "true"
 LAG_DAYS = 7
 MAX_STALENESS_DAYS = 14
 

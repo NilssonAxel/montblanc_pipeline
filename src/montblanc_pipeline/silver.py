@@ -99,7 +99,9 @@ def write_silver(df: DataFrame) -> None:
          .whenNotMatchedInsertAll() \
          .execute()
     else:
-        df.write.format("delta").saveAsTable(silver_weather)
+        df.write.format("delta") \
+            .option("delta.enableChangeDataFeed", "true") \
+            .saveAsTable(silver_weather)
 
     logger.info("Written to %s", silver_weather)
 

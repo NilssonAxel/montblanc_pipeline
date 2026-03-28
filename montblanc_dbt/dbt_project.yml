@@ -22,10 +22,6 @@ clean-targets:         # directories to be removed by `dbt clean`
 # Configuring models
 # Full documentation: https://docs.getdbt.com/docs/configuring-models
 
-seeds:
-  montblanc_dbt:
-    +schema: gold
-
 models:
   montblanc_dbt:
     gold:
