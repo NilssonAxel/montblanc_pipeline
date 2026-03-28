@@ -4,11 +4,6 @@ resources:
     montblanc_pipeline:
       name: montblanc_pipeline_${bundle.target}
       timeout_seconds: 7200
-      trigger:
-        periodic:
-          interval: 1
-          unit: DAYS
-
       email_notifications:
         on_failure:
           - ${workspace.current_user.userName}
@@ -21,6 +16,12 @@ resources:
             parameters:
               - "--catalog"
               - "${var.catalog}"
+              - "--start-date"
+              - "${var.start_date}"
+              - "--end-date"
+              - "${var.end_date}"
+              - "--end-date-active"
+              - "${var.end_date_active}"
           environment_key: default
 
         - task_key: silver

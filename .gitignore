@@ -27,6 +27,9 @@ logs/
 # Notebooks
 *.ipynb
 
+# Environment variables
+.env
+
 # Scratch and exploration
 scratch/**
 !scratch/README.md

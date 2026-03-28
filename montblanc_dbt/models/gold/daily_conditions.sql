@@ -1,6 +1,5 @@
 {{ config(
-    materialized='incremental',
-    unique_key=['waypoint_name', 'date']
+    materialized='view'
 ) }}
 
 SELECT
@@ -20,6 +19,3 @@ SELECT
     sunshine_hours,
     air_density_kgm3
 FROM {{ source('silver', 'weather') }}
-{% if is_incremental() %}
-WHERE date > (SELECT MAX(date) FROM {{ this }})
-{% endif %}
