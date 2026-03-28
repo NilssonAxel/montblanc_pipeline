@@ -2,7 +2,7 @@ terraform {
   required_providers {
     databricks = {
       source  = "databricks/databricks"
-      version = "~> 1.35"
+      version = "~> 1.50"
     }
   }
 }
@@ -39,14 +39,14 @@ resource "databricks_schema" "meta" {
 # Lakehouse Monitoring — tracks data quality and drift on the silver weather table.
 # Requires tables to exist before applying. Set create_monitors = true in
 # terraform.tfvars after the first pipeline run.
-resource "databricks_lakehouse_monitor" "silver_weather" {
+resource "databricks_quality_monitor" "silver_weather" {
   for_each = var.create_monitors ? toset(var.environments) : toset([])
 
   table_name         = "montblanc_${each.key}.silver.weather"
   assets_dir         = "/Shared/montblanc_pipeline/${each.key}/monitoring"
   output_schema_name = "montblanc_${each.key}.meta"
 
-  time_series_profile {
+  time_series {
     timestamp_col = "date"
     granularities = ["1 day", "1 month"]
   }

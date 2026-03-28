@@ -16,6 +16,7 @@ dev = [
     "databricks-connect>=15.4,<15.5",
     "dbt-databricks",
     "ipykernel",
+    "python-dotenv>=1.2.2",
 ]
 
 [project.scripts]

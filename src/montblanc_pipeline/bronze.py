@@ -7,7 +7,7 @@ from pyspark.sql.types import StringType, IntegerType, StructType, StructField, 
 from datetime import date, datetime, timedelta
 from dateutil.relativedelta import relativedelta
 import montblanc_pipeline.config as config
-from montblanc_pipeline.config import WAYPOINTS, API_BASE_URL, VARIABLES, START_DATE, END_DATE, END_DATE_ACTIVE, LAG_DAYS
+from montblanc_pipeline.config import WAYPOINTS, API_BASE_URL, VARIABLES, LAG_DAYS
 from montblanc_pipeline.utils import get_watermark, update_watermark, write_delta_table
 
 logger = logging.getLogger(__name__)
@@ -70,9 +70,9 @@ def transform_bronze(raw_data: list[dict]) -> DataFrame:
 
 def load_bronze() -> None:
     latest = get_watermark("bronze")
-    start_date = datetime.strptime(START_DATE, "%Y-%m-%d").date()
+    start_date = datetime.strptime(config.START_DATE, "%Y-%m-%d").date()
     start = latest + relativedelta(days=1) if latest != date(1900, 1, 1) else start_date
-    end = date.today() - timedelta(days=LAG_DAYS) if not END_DATE_ACTIVE else datetime.strptime(END_DATE, "%Y-%m-%d").date()
+    end = date.today() - timedelta(days=LAG_DAYS) if not config.END_DATE_ACTIVE else datetime.strptime(config.END_DATE, "%Y-%m-%d").date()
 
     months = generate_months(start, end)
 
