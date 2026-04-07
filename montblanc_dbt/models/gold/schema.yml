@@ -29,6 +29,13 @@ models:
         tests:
           - not_null
 
+  - name: date_spine
+    columns:
+      - name: date
+        tests:
+          - not_null
+          - unique
+
   - name: summit_window
     columns:
       - name: date

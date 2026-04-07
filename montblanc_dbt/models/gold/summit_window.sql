@@ -108,14 +108,15 @@ scored AS (
     SELECT
         *,
         -- Wind sub-scores: viable ≤ 14 m/s at summit, ≤ 18 m/s at gouter/vallot; ideal ≤ 7 m/s at summit, ≤ 9 m/s at gouter/vallot
-        GREATEST(0, LEAST(100, ROUND(100 * (14 - summit_windgusts_max_ms) / 7.0)))      AS summit_wind_score,
-        GREATEST(0, LEAST(100, ROUND(100 * (18 - gouter_windgusts_max_ms) / 9.0)))      AS gouter_wind_score,
+        GREATEST(0, LEAST(100, ROUND(100 * (18 - summit_windgusts_max_ms) / 9.0)))      AS summit_wind_score,
+        GREATEST(0, LEAST(100, ROUND(100 * (22 - gouter_windgusts_max_ms) / 13.0)))     AS gouter_wind_score,
         GREATEST(0, LEAST(100, ROUND(100 * (18 - vallot_windgusts_max_ms) / 9.0)))      AS vallot_wind_score,
         -- Summit temperature sub-scores: based on max temp (proxy for summit conditions at 10am)
         -- Cold score: ideal ≥ -10°C; viable down to -15°C, 0 at -15°C
+        -- Cold score: ideal ≥ -10°C (100); 0 at -25°C
         CASE
             WHEN summit_temperature_max_c >= -10 THEN 100
-            ELSE GREATEST(0, ROUND(100 * (summit_temperature_max_c + 15) / 5.0))
+            ELSE GREATEST(0, ROUND(100 * (summit_temperature_max_c + 25) / 15.0))
         END                                                                               AS summit_cold_score,
         -- Heat score: ideal ≤ 0°C; thaw risk above 0°C, 0 at +2°C
         CASE
@@ -131,8 +132,17 @@ scored AS (
         -- Thaw history score: 3-day mean temp — accounts for overnight refreeze dampening daytime thaw
         -- Ideal < -2°C mean; 0 at +3°C mean
         GREATEST(0, LEAST(100, ROUND(100 * (3 - avg_3day_gouter_temp_mean_c) / 5.0)))  AS thaw_score,
-        -- Visibility score: ideal ≤ 30%; viable ≤ 70%; 0 at 80%+
-        GREATEST(0, LEAST(100, ROUND(100 * (80 - summit_cloudcover_pct) / 50.0)))       AS visibility_score,
+        -- Visibility sub-scores
+        -- Cloud cover: ideal ≤ 30%; viable ≤ 70%; 0 at 80%+
+        GREATEST(0, LEAST(100, ROUND(100 * (80 - summit_cloudcover_pct) / 50.0)))        AS visibility_score_cloud,
+        -- Snowfall: ideal 0cm; 0 at 10cm+
+        GREATEST(0, LEAST(100, ROUND(100 * (10 - total_snowfall_cm) / 10.0)))            AS visibility_score_snow,
+        -- Visibility score: cloud and snowfall compound — poor conditions in either reduce overall visibility
+        GREATEST(0, LEAST(100, ROUND(
+            GREATEST(0.0, LEAST(1.0, (80 - summit_cloudcover_pct) / 50.0))
+            * GREATEST(0.0, LEAST(1.0, (10 - total_snowfall_cm) / 10.0))
+            * 100
+        )))                                                                               AS visibility_score,
         -- Avalanche risk components (0-100, higher = more dangerous)
         -- Thermal risk: cumulative heat effect on snowpack — 0 at -10°C 30-day avg, 100 at +5°C
         LEAST(100, GREATEST(0, ROUND(100 * (avg_30day_gouter_temp_max_c + 10) / 15.0))) AS thermal_risk,
@@ -151,12 +161,16 @@ scored AS (
             * CASE WHEN avg_route_snow_depth_m >= 0.01 THEN 1.0 ELSE 0 END                -- snow must be present (1cm detection threshold)
             * GREATEST(0, 1.0 - avg_30day_snow_depth_m / 0.5)                             -- ice was exposed over past 30 days
         )))                                                                                AS accumulation_instability,
-        -- Degradation instability: solar radiation triggering wet slab slides
-        -- Solar radiation saturates snowpack with meltwater, lubricating the base — depth provides the mass
-        -- Temperature gate is embedded in solar_risk; old or fresh snow both wet-slide when warmed
+        -- Degradation instability: solar radiation or rain saturating and destabilising the snowpack
+        -- Solar path: radiation warms snowpack from above, depth provides the sliding mass
+        -- Rain path: percolates rapidly, lubricates base — requires snowpack present (≥ 0.3m) to slide
         LEAST(100, GREATEST(0, ROUND(
-            solar_risk
-            * LEAST(1.0, avg_route_snow_depth_m / 2.0)                                    -- needs significant snowpack mass to slide
+            GREATEST(
+                solar_risk * LEAST(1.0, avg_route_snow_depth_m / 2.0),
+                LEAST(1.0, total_precipitation_mm / 10.0)                                  -- 10mm rain = full risk
+                * CASE WHEN avg_route_snow_depth_m >= 0.3 THEN 1.0 ELSE 0 END             -- needs snowpack present to destabilise
+                * 100
+            )
         )))                                                                                AS degradation_instability,
         -- Wind slab instability: heavy snowfall transported and loaded by strong winds
         -- Independent of thermal/solar paths — can compound with either
@@ -164,42 +178,34 @@ scored AS (
             LEAST(1.0, rolling_3day_snowfall_cm / 30.0)                                    -- 30cm avg snowfall over 3 days = full loading
             * LEAST(1.0, gouter_windgusts_max_ms / 20.0)                                   -- 20 m/s gusts = significant wind transport
             * 100
-        )))                                                                                AS wind_slab_instability,
-        -- Viable: relaxed thresholds — a novice with a guide could summit safely
-        summit_windgusts_max_ms      <= 18
-            AND summit_temperature_max_c  BETWEEN -18 AND 2
-            AND summit_cloudcover_pct     <= 80
-            AND gouter_temperature_min_c  <  0
-            AND gouter_windgusts_max_ms   <= 20
-            AND vallot_windgusts_max_ms   <= 20
-            AND total_precipitation_mm     = 0
-            AND total_snowfall_cm          = 0
-            AND rolling_3day_snowfall_cm  <= 20                                           AS is_viable,
-        -- Recommended: strict thresholds — all safety gates met, Couloir stable
-        summit_windgusts_max_ms      <= 14
-            AND summit_temperature_max_c  BETWEEN -15 AND 2
-            AND summit_cloudcover_pct     <= 70
-            AND gouter_temperature_min_c  <  0
-            AND avg_3day_gouter_temp_mean_c < 0
-            AND gouter_windgusts_max_ms   <= 18
-            AND vallot_windgusts_max_ms   <= 18
-            AND total_precipitation_mm     = 0
-            AND total_snowfall_cm          = 0
-            AND rolling_3day_snowfall_cm  <= 15                                           AS is_recommended
+        )))                                                                                AS wind_slab_instability
     FROM combined
 ),
 
 category_scores AS (
     SELECT
         *,
-        -- Wind: weighted average across summit (60%), gouter (20%), vallot (20%)
-        ROUND(0.6 * summit_wind_score + 0.2 * gouter_wind_score + 0.2 * vallot_wind_score) AS wind_score,
+        -- Wind: worst waypoint sets the ceiling
+        LEAST(summit_wind_score, gouter_wind_score, vallot_wind_score)                      AS wind_score,
         -- Temperature: minimum of cold and heat sub-scores — both directions must be acceptable
         LEAST(summit_cold_score, summit_heat_score)                                          AS temperature_score,
         -- Grand Couloir: freeze score (60%) + thaw history (40%)
-        ROUND(0.6 * gouter_freeze_score + 0.4 * thaw_score)                                AS grand_couloir_score,
+        ROUND(0.6 * gouter_freeze_score + 0.4 * thaw_score)                               AS grand_couloir_score,
         -- Avalanche: wind slab compounds on top of dominant thermal/solar path
-        GREATEST(0, ROUND(100 - LEAST(100, wind_slab_instability + GREATEST(accumulation_instability, degradation_instability)))) AS avalanche_score
+        GREATEST(0, ROUND(100 - LEAST(100, wind_slab_instability + GREATEST(accumulation_instability, degradation_instability)))) AS avalanche_score,
+        -- Viable: manageable for an experienced mountaineer with a guide
+        wind_score          >= 35
+            AND temperature_score   >= 20
+            AND visibility_score    >= 25
+            AND grand_couloir_score >= 25
+            AND avalanche_score     >= 50                                                   AS is_viable,
+        -- Recommended: good conditions, objective hazards within acceptable range
+        wind_score          >= 70
+            AND temperature_score   >= 70
+            AND visibility_score    >= 45
+            AND grand_couloir_score >= 50
+            AND avalanche_score     >= 75
+            AND total_precipitation_mm < 1                                                  AS is_recommended
     FROM scored
 )
 
@@ -242,21 +248,23 @@ SELECT
     CAST(summit_cold_score              AS INT)            AS temperature_score_cold,
     CAST(summit_heat_score              AS INT)            AS temperature_score_heat,
 
-    -- Visibility score
+    -- Visibility score and sub-scores
     CAST(visibility_score               AS INT)            AS visibility_score,
+    CAST(visibility_score_cloud         AS INT)            AS visibility_score_cloud,
+    CAST(visibility_score_snow          AS INT)            AS visibility_score_snow,
 
     -- Grand couloir score and sub-scores
     CAST(grand_couloir_score            AS INT)            AS grand_couloir_score,
     CAST(gouter_freeze_score            AS INT)            AS grand_couloir_score_freeze,
     CAST(thaw_score                     AS INT)            AS grand_couloir_score_thaw,
 
-    -- Avalanche score and sub-scores
-    CAST(avalanche_score                AS INT)            AS avalanche_score,
-    CAST(thermal_risk                   AS INT)            AS avalanche_risk_thermal,
-    CAST(solar_risk                     AS INT)            AS avalanche_risk_solar,
-    CAST(accumulation_instability       AS INT)            AS avalanche_risk_dry_slab,
-    CAST(degradation_instability        AS INT)            AS avalanche_risk_wet_slab,
-    CAST(wind_slab_instability          AS INT)            AS avalanche_risk_wind_slab,
+    -- Avalanche score and sub-scores (higher = safer)
+    CAST(avalanche_score                    AS INT)        AS avalanche_score,
+    CAST(100 - thermal_risk                 AS INT)        AS avalanche_score_thermal,
+    CAST(100 - solar_risk                   AS INT)        AS avalanche_score_solar,
+    CAST(100 - accumulation_instability     AS INT)        AS avalanche_score_dry_slab,
+    CAST(100 - degradation_instability      AS INT)        AS avalanche_score_wet_slab,
+    CAST(100 - wind_slab_instability        AS INT)        AS avalanche_score_wind_slab,
 
     -- Overall
     CAST(ROUND(
@@ -269,11 +277,12 @@ SELECT
     is_viable,
     is_recommended,
     is_recommended
-        AND wind_score          >= 75
+        AND wind_score          >= 80
         AND temperature_score   >= 75
         AND visibility_score    >= 75
         AND grand_couloir_score >= 75
-        AND avalanche_score     >= 75                      AS is_ideal
+        AND avalanche_score     >= 85
+        AND total_precipitation_mm < 1                     AS is_ideal
 FROM category_scores
 {% if is_incremental() %}
 -- Look back 30 days to ensure rolling windows have sufficient data for boundary rows
