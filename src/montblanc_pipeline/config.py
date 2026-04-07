@@ -4,10 +4,10 @@ CATALOG = os.getenv("CATALOG_NAME", "montblanc_dev")
 
 WAYPOINTS = {
     "chamonix": {"lat": 45.9237, "lon": 6.8694, "elevation": 1035},
-    "tete_rousse": {"lat": 45.8461, "lon": 6.8311, "elevation": 3167},
-    "gouter": {"lat": 45.8344, "lon": 6.8233, "elevation": 3835},
-    "vallot": {"lat": 45.8340, "lon": 6.8510, "elevation": 4362},
-    "summit": {"lat": 45.8326, "lon": 6.8652, "elevation": 4808}
+    "tete_rousse": {"lat": 45.8549, "lon": 6.8175, "elevation": 3167},
+    "gouter": {"lat": 45.8510, "lon": 6.8300, "elevation": 3835},
+    "vallot": {"lat": 45.8393, "lon": 6.8520, "elevation": 4362},
+    "summit": {"lat": 45.8326, "lon": 6.8651, "elevation": 4808}
 }
 
 API_BASE_URL = "https://archive-api.open-meteo.com/v1/archive"
