@@ -38,10 +38,16 @@ jobs:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
       - run: uv build --wheel
+      - run: uv run --with dbt-databricks dbt deps --project-dir montblanc_dbt
       - uses: actions/upload-artifact@v4
         with:
           name: wheel
           path: dist/*.whl
+          retention-days: 7
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dbt-packages
+          path: montblanc_dbt/dbt_packages/
           retention-days: 7
 
   deploy-test:
@@ -60,6 +66,10 @@ jobs:
         with:
           name: wheel
           path: dist/
+      - uses: actions/download-artifact@v4
+        with:
+          name: dbt-packages
+          path: montblanc_dbt/dbt_packages/
       - run: databricks bundle deploy --target test
 
   integration-test:
@@ -93,6 +103,10 @@ jobs:
         with:
           name: wheel
           path: dist/
+      - uses: actions/download-artifact@v4
+        with:
+          name: dbt-packages
+          path: montblanc_dbt/dbt_packages/
       - run: databricks bundle deploy --target prod
 
   smoke-test:

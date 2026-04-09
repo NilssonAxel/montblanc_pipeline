@@ -38,14 +38,13 @@ resources:
         - task_key: dbt
           depends_on:
             - task_key: silver
+          max_retries: 2
           environment_key: default
           dbt_task:
             project_directory: ../montblanc_dbt
             commands:
-              - "dbt deps"
-              - "dbt run"
-              - "dbt test"
-              - "dbt source freshness"
+              - "dbt run --vars '{catalog: ${var.catalog}}'"
+              - "dbt test --vars '{catalog: ${var.catalog}}'"
             warehouse_id: ${var.warehouse_id}
             catalog: ${var.catalog}
             schema: gold

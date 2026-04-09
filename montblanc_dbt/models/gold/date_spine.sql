@@ -2,11 +2,11 @@
 
 with dates as (
     {% if is_incremental() %}
-        {{ dbt_utils.date_spine(
-            datepart="day",
-            start_date="(select dateadd(day, 1, max(date)) from {{ this }})",
-            end_date="cast('2030-01-01' as date)"
-        ) }}
+        select explode(sequence(
+            least(dateadd(day, 1, (select max(date) from {{ this }})), cast('2030-01-01' as date)),
+            cast('2030-01-01' as date),
+            interval 1 day
+        )) as date_day
     {% else %}
         {{ dbt_utils.date_spine(
             datepart="day",

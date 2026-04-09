@@ -2,7 +2,7 @@ version: 2
 
 sources:
   - name: silver
-    catalog: "{{ env_var('DBT_CATALOG', 'montblanc_dev') }}"
+    catalog: "{{ var('catalog', 'montblanc_dev') }}"
     schema: silver
     description: >
       Cleaned and flattened weather records produced by the silver Python pipeline.
