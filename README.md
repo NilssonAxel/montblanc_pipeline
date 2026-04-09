@@ -1,6 +1,6 @@
 # montblanc_pipeline
 
-A Databricks data pipeline that fetches historical weather data for Mont Blanc waypoints from the Open-Meteo API, transforms it through a medallion architecture (bronze → silver → gold), and models it with dbt for summit condition analysis.
+A Databricks data pipeline that fetches historical weather data for Mont Blanc waypoints from the Open-Meteo API, transforms it through a medallion architecture (bronze → silver → gold), and models it with dbt for summit condition analysis. The project is built to mimic a production-grade CI/CD setup with automated testing, environment promotion, and infrastructure-as-code.
 
 ## Architecture
 
@@ -19,10 +19,9 @@ Open-Meteo API
 
 **Gold models:**
 - `daily_conditions` — per-waypoint daily weather summary
-- `monthly_conditions` — monthly aggregates per waypoint
 - `elevation_gradient` — rate of change in conditions per 100m elevation gain
 - `summit_window` — daily viability and scoring for summit attempts
-- `seasonal_summary` — cross-year monthly statistics at the summit
+- `date_spine` — calendar dimension with climbing season flag
 
 **Waypoints:** Chamonix (1035m) → Tête Rousse (3167m) → Goûter (3835m) → Vallot (4362m) → Summit (4808m)
 
@@ -56,6 +55,8 @@ cp terraform.tfvars.example terraform.tfvars
 Fill in `terraform.tfvars`:
 - `databricks_host` — your workspace URL, e.g. `https://dbc-xxxxxx.cloud.databricks.com`
 - `databricks_token` — a personal access token from **Settings → Developer settings → Access tokens**
+
+Before running Terraform, create the Unity Catalog catalogs manually in the Databricks UI (**Catalog → Add → Add a catalog**) for each environment: `montblanc_dev`, `montblanc_test`, `montblanc_prod`. Catalogs are not managed by Terraform because the Databricks provider requires an explicit storage location when creating them via API, but the UI can provision them using the workspace's default managed storage. Since catalogs are created once and rarely change, the manual step is acceptable.
 
 ```bash
 terraform init
@@ -128,7 +129,7 @@ CI runs automatically on the PR. Both lint and tests must pass before merging.
 **Deploy to dev for manual testing**
 ```bash
 databricks bundle deploy --target dev
-databricks bundle run montblanc_pipeline_dev --target dev
+databricks bundle run montblanc_pipeline --target dev
 ```
 
 ## CI/CD
@@ -151,6 +152,6 @@ Serverless compute terminates automatically after each task completes. Verify au
 
 The pipeline runs on a daily schedule in `test` and `prod` with a 2 hour timeout:
 
-`bronze → silver → dbt run → dbt test → dbt source freshness`
+`bronze → silver → dbt run → dbt test`
 
-Data must be no older than 14 days — a warning is raised at 14 days and the job fails at 16 days. Schedules are paused in `dev`.
+Schedules are paused in `dev`.

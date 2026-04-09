@@ -4,7 +4,6 @@ infrastructure/.terraform/
 infrastructure/.terraform.lock.hcl
 infrastructure/terraform.tfstate
 infrastructure/terraform.tfstate.backup
-infrastructure/terraform.tfvars
 
 # Databricks
 .databricks/
@@ -17,6 +16,8 @@ build/
 dist/
 __pycache__/
 *.egg-info
+.ruff_cache/
+.pytest_cache/
 
 # Virtual environments
 .venv/

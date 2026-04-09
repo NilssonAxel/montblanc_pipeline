@@ -74,6 +74,7 @@ targets:
       schema: prod
       warehouse_id: bb85fa3f62758a19
       start_date: "2020-01-01"
+      end_date: "2020-02-28"
       end_date_active: "false"
     permissions:
       - user_name: ${workspace.current_user.userName}

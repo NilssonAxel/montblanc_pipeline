@@ -22,10 +22,9 @@ def test_prod_gold_tables_have_rows(spark: SparkSession):
     """All gold tables exist and have rows in prod."""
     for table in [
         "daily_conditions",
-        "monthly_conditions",
         "summit_window",
         "elevation_gradient",
-        "seasonal_summary",
+        "date_spine",
     ]:
         df = spark.table(f"{CATALOG}.gold.{table}")
         assert df.count() > 0, f"gold.{table} is empty in prod"
