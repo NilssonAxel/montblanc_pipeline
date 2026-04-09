@@ -60,10 +60,6 @@ jobs:
         with:
           name: wheel
           path: dist/
-      - uses: actions/download-artifact@v4
-        with:
-          name: dbt-packages
-          path: montblanc_dbt/dbt_packages/
       - run: databricks bundle deploy --target test
 
   integration-test:
@@ -97,10 +93,6 @@ jobs:
         with:
           name: wheel
           path: dist/
-      - uses: actions/download-artifact@v4
-        with:
-          name: dbt-packages
-          path: montblanc_dbt/dbt_packages/
       - run: databricks bundle deploy --target prod
 
   smoke-test:
