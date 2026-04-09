@@ -43,6 +43,7 @@ resources:
           dbt_task:
             project_directory: ../montblanc_dbt
             commands:
+              - "dbt deps"
               - "dbt run --vars '{catalog: ${var.catalog}}'"
               - "dbt test --vars '{catalog: ${var.catalog}}'"
             warehouse_id: ${var.warehouse_id}
